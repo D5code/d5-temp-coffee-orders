@@ -1,0 +1,183 @@
+<?php
+
+defined( 'ABSPATH' ) or die( 'No direct access' );
+
+/**
+ *  Shortcode for Displaying Order Form
+ */
+
+add_shortcode( 'd5tco-show-orderform', 'd5tco_show_orderform_shortcode_func' );
+
+function d5tco_show_orderform_shortcode_func( $atts ){
+	ob_start();
+	d5tco_show_orderform($atts);
+	$output = ob_get_contents();
+    ob_end_clean();
+	return $output;
+}
+
+function d5tco_show_orderform( $atts ){ 
+    $product_cat =  $atts['cat'];
+?>
+<style>.order-form a.button{
+    border:solid 1px #c5b358
+}</style>
+<div style="clear:both">
+    <div class="order-form woocommerce">
+    <?php
+        $args = array(
+            'post_type' => 'product',
+            'orderby' => 'menu_order',
+            'order' => 'asc',
+            'product_cat' => $product_cat //'home-coffee-subscriptions'
+        );
+
+            $products = new WP_Query( $args );
+            echo '<div class="section one"><h2>STEP 1: SELECT COFFEE</h2>';
+            echo '<ul id="select-product" class="products">';
+            while ( $products->have_posts() ) {
+                $products->the_post();
+                ?>
+                    <li data-value='<?php the_title(); ?>' class="product">
+                         <div class="product-inner clr">
+	                        <img class="woo-entry-image-main" alt="Home Delivery Test 3" src="<?php echo get_the_post_thumbnail_url(get_the_ID(),'medium'); ?>" data-no-retina="" width="1000" height="1000">
+                            <div class="product-details match-height-content">
+                                <h2 class="woocommerce-loop-product__title"><?php the_title(); ?></h2>
+                                <span class="description woocommerce-product-details__short-description">
+                                    <?php the_excerpt(); ?>
+                                </span>
+                                <span class="price">
+                                    <span class="woocommerce-Price-amount amount">
+                                        <?php //echo get_regular_price(); ?>
+                                        <?php $price = get_post_meta( get_the_ID(), '_price', true ); ?>
+                                        From: <?php echo wc_price( $price ); ?>
+                                    </span>
+                                </span>
+                                <a data-title='<?php the_title(); ?>' data-value='<?php the_ID(); ?>'  class="button addtocartbutton">Select</a>    
+                            </div>
+                        </div>
+                      </li>
+                <?php
+            }
+            echo '</ul></div>';
+
+            
+            // Bag sizes
+            echo '<div class="section size"><h2>STEP 2: HOW MUCH</h2>';
+            echo '<ul id="select-size">';
+            $size_terms = get_terms("pa_size");
+            foreach ( $size_terms as $size_term ) {
+                
+                if( ('home-coffee-subscriptions' == $product_cat && strpos($size_term->description, 'Home') !== false) || 
+                    ('office-coffee-subscription' == $product_cat && strpos($size_term->description, 'Office') !== false) ){
+
+                    $term_image_id = get_term_meta( $size_term->term_id, 'pa_size_swatches_id_photo', true);
+                    $imgurl = wp_get_attachment_image_url( $term_image_id, 'medium' );
+                    echo '<li>';
+                    echo  '<img src="' . $imgurl . '" class="img-size">';
+                    echo '<p><a data-value="' . $size_term->slug . '" data-title="' . $size_term->name . '"  class="button addtocartbutton">' . $size_term->name . '</a></p>';
+                   
+                    echo '</li>';
+                }
+                
+            }
+            echo '</ul></div>';
+
+
+            // Select Grind
+            echo '<div class="section grind"><h2>STEP 3: SELECT GRIND</h2>';
+            echo '<ul id="select-grind">';
+            $terms = get_terms("pa_grind");
+            foreach ( $terms as $term ) {
+                
+                if( ('home-coffee-subscriptions' == $product_cat && strpos($term->description, 'Home') !== false) || 
+                ('office-coffee-subscription' == $product_cat && strpos($term->description, 'Office') !== false) ){
+                    $term_image_id = get_term_meta( $term->term_id, 'pa_grind_swatches_id_photo', true);
+                    $trunc_name = substr($term->name, 0, strpos($term->name, "("));
+                    $imgurl = wp_get_attachment_image_url( $term_image_id, 'medium' );
+
+                    echo '<li>';
+                    echo '<img src="' . $imgurl . '" class="img-grind">';
+                // echo wp_get_attachment_image ( $term_image_id, "medium", "", array( "class" => "img-grind" ) );
+                    echo '<p><a data-title="' . $term->name . '"  data-value="' . $term->slug . '"  class="button addtocartbutton">' . $trunc_name . '</a></p>';
+                    echo '</li>';
+                }
+
+            }
+            echo '</ul></div>';
+
+
+            // Order Frequency - not pulled from attributes. TODO: SHOULD BE
+            echo '<div class="section frequency"><h2>STEP 4: FREQUENCY</h2>';
+            echo '<ul id="select-frequency">';
+            $terms = get_terms("pa_delivery");
+            foreach ( $terms as $term ) {
+                
+                $term_image_id = get_term_meta( $term->term_id, 'pa_delivery_swatches_id_photo', true);
+                $imgurl = wp_get_attachment_image_url( $term_image_id, 'medium' );
+
+                echo '<li>';
+                echo '<img src="' . $imgurl . '" class="img-delivery">';
+                echo '<p><a data-title="' . $term->name . '"  data-value="' . $term->slug . '"  class="button addtocartbutton">' . $term->name . '</a></p>';
+                echo '</li>';
+
+            }
+            echo '</ul></div>';
+           
+
+           
+            // Summary section  ?>
+            <div class="section summary">
+
+                
+                <div class="items">
+                    <h2>Order Summary</h2>
+
+                    <div class=" summary-item summary-product">
+                        <div class="label">Blend</div>
+                        <div class="title"></div>
+                        <div class="value"></div>
+                        <a href="javascript:;" class="summary-edit">(edit choice)</a>
+                    </div>
+                  
+                    <div class=" summary-item summary-grind">
+                        <div class="label">Grind Type</div>
+                        <div class="title"></div>
+                        <div class="value"></div>
+                        <a href="javascript:;" class="summary-edit">(edit choice)</a>
+                    </div>
+
+                    <div class=" summary-item summary-frequency">
+                        <div class="label">Delivery</div>
+                        <div class="title"></div>
+                        <div class="value"></div>
+                        <a href="javascript:;" class="summary-edit">(edit choice)</a>
+                    </div>  
+
+                    <div class=" summary-item summary-size">
+                        <div class="label">Bag Size</div>
+                        <div class="title"></div>
+                        <a href="javascript:;" class="summary-edit">(edit choice)</a>
+                        <div class="value"></div>
+                    </div>
+
+                    <div class=" summary-item summary-url">
+                        <div class="value"></div>
+                    </div>
+                    
+                    <div class="summary-price">
+                    </div>  
+                    <div class="subscribe">
+                        <a href="" id="subscribe-button" class="button">Subscribe</a>
+                        <div class="tagline">
+                         Freshly Roasted and shipped/Change Options or Cancel Anytime
+                        </div>
+                    </div>
+                    
+                 </div>
+            <div id="order-output"></div>
+
+    </div>
+</div>
+<?php		
+} // end 

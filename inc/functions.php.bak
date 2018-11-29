@@ -1,0 +1,66 @@
+<?php
+
+defined( 'ABSPATH' ) or die( 'No direct access' );
+
+
+// Called by the js Ajax function
+function d5tco_do_task(){
+
+    //	$firstname = $_POST['firstname'];
+    //	$lastname = $_POST['lastname'];
+    
+    
+        //$out = "The time is " . date("h:i:sa");
+    $out = filterVariations();
+
+      die('Time: '  . date("h:i:sa") . $out) ;
+    
+    
+}
+
+
+function filterVariations() {
+    $query = new WP_Query( array(
+        'post_parent' => 1623,
+        'post_status' => 'publish',
+        'post_type' => 'product_variation',
+        'posts_per_page' => 15,
+        // 'meta_query' => array(
+        //     array(
+        //         'key'   => 'attribute_pa_size',
+        //         'value' => 'size_8x10',
+        //     ),
+        //     array(
+        //         'key'   => 'attribute_pa_material',
+        //         'value' => 'mat_luster_photo_paper',
+        //     ),
+        //     array(
+        //         'key'   => 'attribute_pa_frame',
+        //         'value' => 'fra_silver_wood',
+        //     ),
+        //     array(
+        //         'key'   => 'attribute_pa_mat_usage',
+        //         'value' => 'musa_yes',
+        //     ),
+        // ),
+    ) );
+    $result = 'Output from query: ';
+    $handle=new WC_Product_Variable('1623');
+    $variations1=$handle->get_children();
+    foreach ($variations1 as $value) {
+    $single_variation=new WC_Product_Variation($value);
+        $result .= '<br>' . $value. ' : ' .implode(" / ", $single_variation->get_variation_attributes());
+}
+    // if($query->have_posts()){
+    //     while ($query->have_posts()) : the_post(); 
+    //        // $query->next_post();
+    //         $result .= get_the_title();
+    //     endwhile;
+    //     wp_reset_postdata();
+    // }
+    // wp_reset_query();
+
+    return $result;
+}
+
+
